@@ -1,5 +1,6 @@
 const Student = require('../model/student.model');
 const {fetchUserInfo, fetchUserRatingHistory, fetchUserSubmissions} = require('../service/cf.service');
+const {sendMail} = require('../service/mail.service');
 const Parser = require('json2csv').Parser;
 class StudentController {
 
@@ -368,7 +369,7 @@ class StudentController {
         return res.status(500).json({ message: 'Internal server error.' });
     }
 }
- async deleteStudent(req, res) {
+   async deleteStudent(req, res) {
     const { handle } = req.params;
     try{
         const student = await Student.findOne({
@@ -385,7 +386,7 @@ class StudentController {
         }
     }
 
-    async  downloadStudentsCsv(req, res) {
+   async  downloadStudentsCsv(req, res) {
     try {
         // Fetch all students from database
         const students = await Student.find();
@@ -458,6 +459,41 @@ class StudentController {
         return res.status(500).json({ message: 'Internal server error.' });
     }
 }
+   async  sendReminderEmail(req, res) {
+        // Extract Codeforces handle from request body
+        console.log(req.params);
+        const { cfHandle } = req.params; 
+        
+        if (!cfHandle) {
+            return res.status(400).json({ message: 'Codeforces handle is required.' });
+        }
+        try {
+            // Fetch student from database
+            const student = await Student.findOne({ cfHandle: cfHandle });
+            if (!student) {
+                return res.status(404).json({ message: 'Student not found with provided handle.' });
+            }
+            // Check if the student has solved any problems in the last 7 days.
+            const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+            const hasAttemptedProblems = student.submissions.some(submission => {
+                return submission.time >= sevenDaysAgo && submission.verdict === 'OK';}
+            );  
+            if (hasAttemptedProblems) {
+                return res.status(400).json({ message: 'Student has solved problems in the last 7 days. No reminder needed.' });
+                
+            }
+            // Send reminder email
+            await sendMail(student.email, student.name, cfHandle);
+            return res.status(200).json({ message: 'Reminder email sent successfully.' });
+        }catch (error) {
+            console.error('Error sending reminder email:', error);
+            return res.status(500).json({ message: 'Internal server error.' });
+        }
+
+    }
+    
+
+
 }
 
 
