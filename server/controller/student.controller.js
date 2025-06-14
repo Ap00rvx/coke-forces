@@ -29,9 +29,9 @@ class StudentController {
             newStudent.maxRating = userInfo.maxRating;
             newStudent.rank = userInfo.rank;
             newStudent.titlePhoto = userInfo.titlePhoto || "";
-            newStudent.lastOnline = userInfo.lastOnlineTime;
-            newStudent.organization = userInfo.organization || "";
-            newStudent.registeredAt = userInfo.registrationTime;
+            newStudent.lastOnline = userInfo.lastOnlineTime ? new Date(userInfo.lastOnlineTime * 1000) : null; 
+            newStudent.organization = userInfo.organization || ""; 
+            newStudent.registeredAt = new Date(userInfo.registrationTime * 1000); 
             newStudent.friendOfCount = userInfo.friendOfCount || 0;
 
             // Fetch rating history
@@ -233,36 +233,109 @@ class StudentController {
         return res.status(500).json({ message: 'Internal server error.' });
     }
 }
-   async updateStudentDetails(req, res) {
+   async  updateStudentDetails(req, res) {
     const { handle } = req.params;
-    const { name, email, phone,cfHandle } = req.body;
+    const { name, email, phone, cfHandle } = req.body;
     if (!handle) {
         return res.status(400).json({ message: 'Codeforces handle is required.' });
     }
+
+    const session = await Student.startSession();
+    session.startTransaction();
+
     try {
         // Fetch student from database
-        const student = await Student.findOne({ cfHandle: handle });
+        const student = await Student.findOne({ cfHandle: handle }).session(session);
         if (!student) {
+            await session.abortTransaction();
+            session.endSession();
             return res.status(404).json({ message: 'Student not found with provided handle.' });
         }
+
         // Update student details
         if (name) student.name = name;
         if (email) student.email = email;
         if (phone) student.phone = phone;
+
         if (cfHandle) {
-            const existingStudent = await Student.findOne({
-                cfHandle
-            }); 
+            const existingStudent = await Student.findOne({ cfHandle }).session(session);
             if (existingStudent && existingStudent._id.toString() !== student._id.toString()) {
+                await session.abortTransaction();
+                session.endSession();
                 return res.status(400).json({ message: 'Codeforces handle already exists.' });
             }
             student.cfHandle = cfHandle;
-            
+
+            // Fetch updated Codeforces data
+            const userInfo = await fetchUserInfo(cfHandle);
+            if (!userInfo) {
+                await session.abortTransaction();
+                session.endSession();
+                return res.status(400).json({ message: 'Invalid Codeforces handle or unable to fetch data.' });
+            }
+
+            // Update Codeforces data
+            student.rating = userInfo.rating || 0;
+            student.maxRating = userInfo.maxRating || 0;
+            student.rank = userInfo.rank || 'Unranked';
+            student.titlePhoto = userInfo.titlePhoto || '';
+            student.lastOnline = userInfo.lastOnlineTime ? new Date(userInfo.lastOnlineTime * 1000) : null;
+            student.organization = userInfo.organization || '';
+            student.registeredAt = userInfo.registrationTime ? new Date(userInfo.registrationTime * 1000) : null;
+            student.friendOfCount = userInfo.friendOfCount || 0;
+
+            // Fetch updated rating history
+            const ratingHistory = await fetchUserRatingHistory(cfHandle);
+            if (ratingHistory && ratingHistory.length > 0) {
+                student.contests = ratingHistory.map(contest => ({
+                    contestId: contest.contestId,
+                    contestName: contest.contestName,
+                    rank: contest.rank,
+                    oldRating: contest.oldRating,
+                    newRating: contest.newRating,
+                    ratingChange: contest.ratingChange,
+                    date: new Date(contest.ratingUpdateTimeSeconds * 1000),
+                }));
+            }
+
+            // Fetch updated submission history
+            const submissions = await fetchUserSubmissions(cfHandle);
+            if (submissions && submissions.length > 0) {
+                student.submissions = submissions.map(submission => ({
+                    problemName: submission.problem.name,
+                    contestId: submission.contestId,
+                    index: submission.problem.index,
+                    rating: submission.problem.rating || 0,
+                    verdict: submission.verdict,
+                    language: submission.programmingLanguage,
+                    tags: submission.problem.tags || [],
+                    time: new Date(submission.creationTimeSeconds * 1000),
+                }));
+            }
         }
-        // Save updated student
-        
+
+        // Update sync metadata
+        student.lastSyncedAt = new Date();
+        await student.save({ session });
+
+        await session.commitTransaction();
+        session.endSession();
+
+        return res.status(200).json({
+            message: 'Student details updated successfully.',
+            student: {
+                id: student._id,
+                cfHandle: student.cfHandle,
+                name: student.name,
+            },
+        });
+    } catch (error) {
+        await session.abortTransaction();
+        session.endSession();
+        console.error('Error updating student details:', error);
+        return res.status(500).json({ message: 'Internal server error.' });
     }
-   }
+}
 }
 
 module.exports = new StudentController();
