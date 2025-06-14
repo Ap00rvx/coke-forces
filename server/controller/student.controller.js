@@ -69,6 +69,37 @@ class StudentController {
         return res.status(500).json({ message: 'Internal server error.' });
     }
 }
+    async getAllStudents(req, res) {
+        try {
+            const students = await Student.find().sort({ createdAt: -1 });
+            // return only student details like name,email,phone,cfHandle,rating,maxRating,rank,titlePhoto,lastOnline,organization,registeredAt,friendOfCount,contestCount,submissionCount
+            const studentDetails = students.map(student => ({
+                id: student._id,
+                name: student.name,
+                email: student.email,
+                phone: student.phone,
+                cfHandle: student.cfHandle,
+                rating: student.rating,
+                maxRating: student.maxRating,
+                rank: student.rank,
+                titlePhoto: student.titlePhoto,
+                lastOnline: student.lastOnline,
+                registeredAt: student.registeredAt,
+                organization: student.organization,
+                friendOfCount: student.friendOfCount,
+                contestCount: student.contests.length,
+                submissionCount: student.submissions.length,
+                createdAt: student.createdAt,
+                updatedAt: student.updatedAt,
+            }));
+
+            return res.status(200).json({ students: studentDetails });
+        }
+        catch (error) {
+            console.error('Error fetching students:', error);
+            return res.status(500).json({ message: 'Internal server error.' });
+        }
+    } 
 }
 
 module.exports = new StudentController();

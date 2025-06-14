@@ -44,7 +44,7 @@ async function fetchUserRatingHistory(handle) {
         if (res.data.status !== 'OK') {
             throw new Error(`Codeforces API error: ${res.data.comment || 'Unknown error'}`);
         }
-        return res.data;  
+        return res.data.result;  
       } catch (err) {
         console.error(`Error fetching rating history for ${handle}:`, err.message);
         return [];
