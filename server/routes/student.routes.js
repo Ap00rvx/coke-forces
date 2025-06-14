@@ -10,6 +10,7 @@ router.put('/student/:handle', studentController.updateStudentDetails);
 router.delete('/student/:handle', studentController.deleteStudent);
 
 router.post('/student/send-reminder/:cfHandle', studentController.sendReminderEmail);
+router.post('/student/sync', studentController.syncStudentsData);
 
 
 

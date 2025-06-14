@@ -1,6 +1,7 @@
 const Student = require('../model/student.model');
 const {fetchUserInfo, fetchUserRatingHistory, fetchUserSubmissions} = require('../service/cf.service');
 const {sendMail} = require('../service/mail.service');
+const {syncCodeforcesData} = require('../service/sync.service');
 const Parser = require('json2csv').Parser;
 class StudentController {
 
@@ -34,6 +35,9 @@ class StudentController {
             newStudent.organization = userInfo.organization || ""; 
             newStudent.registeredAt = new Date(userInfo.registrationTime * 1000); 
             newStudent.friendOfCount = userInfo.friendOfCount || 0;
+            newStudent.lastSyncedAt = new Date();
+            newStudent.dataSyncFrequency = 'daily'; 
+            
 
             // Fetch rating history
             const ratingHistory = await fetchUserRatingHistory(cfHandle);
@@ -241,6 +245,11 @@ class StudentController {
             friendOfCount: student.friendOfCount,
             contestCount: student.contests.length,
             submissionCount: student.submissions.length,
+            lastReminderSent: student.lastReminderSent,
+            reminderCount: student.reminderCount,
+            lastReminderSent: student.lastReminderSent ? student.lastReminderSent.toISOString() : null,
+            lastSyncedAt: student.lastSyncedAt ? student.lastSyncedAt.toISOString() : null,
+
         };
 
         return res.status(200).json({
@@ -484,6 +493,10 @@ class StudentController {
             }
             // Send reminder email
             await sendMail(student.email, student.name, cfHandle);
+            // Update reminder count and last reminder sent date
+            student.reminderCount += 1;
+            student.lastReminderSent = new Date();
+            await student.save();
             return res.status(200).json({ message: 'Reminder email sent successfully.' });
         }catch (error) {
             console.error('Error sending reminder email:', error);
@@ -491,7 +504,22 @@ class StudentController {
         }
 
     }
-    
+
+    async  syncStudentsData(req, res) {
+    try {
+        const result = await syncCodeforcesData();
+        return res.status(200).json({
+            message: 'Codeforces data sync completed.',
+            updated: result.updated,
+            skipped: result.skipped,
+            errors: result.errors,
+        });
+    } catch (error) {
+        console.error('Error syncing students data:', error);
+        return res.status(500).json({ message: 'Internal server error.' });
+    }
+}
+
 
 
 }
