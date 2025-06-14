@@ -1,6 +1,6 @@
 const Student = require('../model/student.model');
 const {fetchUserInfo, fetchUserRatingHistory, fetchUserSubmissions} = require('../service/cf.service');
-
+const Parser = require('json2csv').Parser;
 class StudentController {
 
     // Create a new student
@@ -70,7 +70,7 @@ class StudentController {
         return res.status(500).json({ message: 'Internal server error.' });
     }
 }
-   async  getAllStudents(req, res) {
+   async getAllStudents(req, res) {
     try {
         // Extract query parameters
         const page = parseInt(req.query.page) || 1;
@@ -138,7 +138,7 @@ class StudentController {
         return res.status(500).json({ message: 'Internal server error.' });
     }
 }
-async  getHandleDetails(req, res) {
+   async getHandleDetails(req, res) {
     const { handle } = req.params;
     const days = parseInt(req.query.days);
     const contestDays = parseInt(req.query.contestDays);
@@ -384,7 +384,82 @@ async  getHandleDetails(req, res) {
         return res.status(500).json({ message: 'Internal server error.' });
         }
     }
+
+    async  downloadStudentsCsv(req, res) {
+    try {
+        // Fetch all students from database
+        const students = await Student.find();
+
+        // Prepare data for CSV
+        const studentData = students.map(student => {
+            const solvedSubmissions = student.submissions.filter(sub => sub.verdict === 'OK').length;
+            // Helper to format date as dd/mm/yyyy and time (HH:MM:SS)
+            function formatDateTime(date) {
+                if (!date) return '';
+                const d = new Date(date);
+                const day = String(d.getDate()).padStart(2, '0');
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const year = d.getFullYear();
+                const hours = String(d.getHours()).padStart(2, '0');
+                const minutes = String(d.getMinutes()).padStart(2, '0');
+                const seconds = String(d.getSeconds()).padStart(2, '0');
+                return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
+            }
+
+            return {
+                name: student.name,
+                email: student.email,
+                phone: student.phone,
+                cfHandle: student.cfHandle,
+                rating: student.rating || 0,
+                maxRating: student.maxRating || 0,
+                rank: student.rank || 'Unranked',
+                titlePhoto: student.titlePhoto || '',
+                lastOnline: student.lastOnline ? formatDateTime(student.lastOnline) : '',
+                registeredAt: student.registeredAt ? formatDateTime(student.registeredAt) : '',
+                organization: student.organization || '',
+                friendOfCount: student.friendOfCount || 0,
+                submissionCount: student.submissions.length,
+                totalProblemsSolved: solvedSubmissions,
+            };
+        });
+
+        // Define CSV fields
+        const fields = [
+            { label: 'Name', value: 'name' },
+            { label: 'Email', value: 'email' },
+            { label: 'Phone', value: 'phone' },
+            { label: 'Codeforces Handle', value: 'cfHandle' },
+            { label: 'Rating', value: 'rating' },
+            { label: 'Max Rating', value: 'maxRating' },
+            { label: 'Rank', value: 'rank' },
+            { label: 'Title Photo', value: 'titlePhoto' },
+            { label: 'Last Online', value: 'lastOnline' },
+            { label: 'Registered At', value: 'registeredAt' },
+            { label: 'Organization', value: 'organization' },
+            { label: 'Friend of Count', value: 'friendOfCount' },
+            { label: 'Submission Count', value: 'submissionCount' },
+            { label: 'Total Problems Solved', value: 'totalProblemsSolved' },
+        ];
+
+        // Generate CSV
+        const json2csvParser = new Parser({ fields });
+        const csv = json2csvParser.parse(studentData);
+
+        // Set response headers for CSV download
+        const timestamp = new Date().toISOString().replace(/:/g, '-');
+        res.setHeader('Content-Disposition', `attachment; filename=students_export_${timestamp}.csv`);
+        res.setHeader('Content-Type', 'text/csv');
+
+        // Send CSV data
+        res.status(200).send(csv);
+    } catch (error) {
+        console.error('Error generating students CSV:', error);
+        return res.status(500).json({ message: 'Internal server error.' });
+    }
 }
+}
+
 
 
 module.exports = new StudentController();
