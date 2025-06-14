@@ -138,10 +138,12 @@ class StudentController {
         return res.status(500).json({ message: 'Internal server error.' });
     }
 }
-   async  getHandleDetails(req, res) {
+async  getHandleDetails(req, res) {
     const { handle } = req.params;
     const days = parseInt(req.query.days);
+    const contestDays = parseInt(req.query.contestDays);
     const validDays = [7, 30, 90];
+    const validContestDays = [30, 90, 365];
 
     // Validate input
     if (!handle) {
@@ -150,7 +152,10 @@ class StudentController {
     if (days && !validDays.includes(days)) {
         return res.status(400).json({ message: 'Days must be 7, 30, or 90.' });
     }
-    
+    if (contestDays && !validContestDays.includes(contestDays)) {
+        return res.status(400).json({ message: 'Contest days must be 30, 90, or 365.' });
+    }
+
     try {
         // Fetch student from database
         const student = await Student.findOne({ cfHandle: handle });
@@ -160,24 +165,20 @@ class StudentController {
 
         // Filter submissions by time period if specified
         const cutoffTime = days ? new Date(Date.now() - days * 24 * 60 * 60 * 1000) : null;
-        console.log(cutoffTime);
         const filteredSubmissions = cutoffTime
             ? student.submissions.filter(sub => sub.time >= cutoffTime)
             : student.submissions;
 
-        // Calculate metrics
+        // Calculate submission metrics
         let hardestProblem = null;
         let totalSolved = 0;
         let totalRating = 0;
         const solvedSubmissions = filteredSubmissions.filter(sub => sub.verdict === 'OK');
-        console.log(solvedSubmissions);
 
         solvedSubmissions.forEach(sub => {
             totalSolved++;
-           
-                console.log(sub.rating);
-                console.log(totalRating);
-                totalRating += sub.rating || 0 ;
+            if (sub.rating) {
+                totalRating += sub.rating;
                 if (!hardestProblem || sub.rating > hardestProblem.rating) {
                     hardestProblem = {
                         problemName: sub.problemName,
@@ -187,12 +188,40 @@ class StudentController {
                         verdict: sub.verdict,
                     };
                 }
-            
+            }
         });
 
         const averageRating = totalSolved > 0 ? (totalRating / totalSolved).toFixed(2) : 0;
         const daysPeriod = days || (student.createdAt ? (Date.now() - student.createdAt.getTime()) / (24 * 60 * 60 * 1000) : 1);
         const averageProblemsPerDay = totalSolved > 0 ? (totalSolved / daysPeriod).toFixed(2) : 0;
+
+        // Filter contests by time period if specified
+        const contestCutoffTime = contestDays ? new Date(Date.now() - contestDays * 24 * 60 * 60 * 1000) : null;
+        const filteredContests = contestCutoffTime
+            ? student.contests.filter(contest => contest.date >= contestCutoffTime)
+            : student.contests;
+
+        // Calculate contest metrics
+        const ratingGraph = filteredContests.map(contest => ({
+            date: contest.date,
+            rating: contest.newRating,
+        }));
+
+        const contestDetails = filteredContests.map(contest => {
+            // Count unsolved problems in the contest
+            const contestSubmissions = student.submissions.filter(sub => sub.contestId === contest.contestId);
+            const solvedProblems = contestSubmissions.filter(sub => sub.verdict === 'OK').map(sub => sub.index);
+            const allProblems = [...new Set(contestSubmissions.map(sub => sub.index))];
+            const unsolvedProblems = allProblems.filter(index => !solvedProblems.includes(index)).length;
+
+            return {
+                contestId: contest.contestId,
+                contestName: contest.contestName,
+                rank: contest.rank,
+                ratingChange: contest.ratingChange,
+                unsolvedProblems,
+            };
+        });
 
         // Prepare student details
         const studentDetails = {
@@ -212,21 +241,24 @@ class StudentController {
             contestCount: student.contests.length,
             submissionCount: student.submissions.length,
         };
-        
+
         return res.status(200).json({
             student: studentDetails,
-            days: days === NaN ? "All Time"  : days.toString(),
+            days: isNaN(days) ? 'All Time' : days.toString(),
+            contestDays: isNaN(contestDays) ? 'All Time' : contestDays.toString(),
             metrics: {
                 hardestProblem,
                 totalProblemsSolved: totalSolved,
                 averageRating,
                 averageProblemsPerDay,
                 totalSubmissions: filteredSubmissions.length,
-                totalSolved:solvedSubmissions.length,
+                totalSolved: solvedSubmissions.length,
             },
-            contests: student.contests,
+            contests: {
+                ratingGraph,
+                contestList: contestDetails,
+            },
             submissions: filteredSubmissions,
-           
         });
     } catch (error) {
         console.error('Error fetching handle details:', error);
@@ -336,6 +368,23 @@ class StudentController {
         return res.status(500).json({ message: 'Internal server error.' });
     }
 }
+ async deleteStudent(req, res) {
+    const { handle } = req.params;
+    try{
+        const student = await Student.findOne({
+            cfHandle: handle
+        });
+        if (!student) {
+            return res.status(404).json({ message: 'Student not found with provided handle.' });
+        }
+        await Student.deleteOne({ cfHandle: handle });
+        return res.status(200).json({ message: 'Student deleted successfully.' , handle: handle });
+        } catch (error) {
+        console.error('Error deleting student:', error);
+        return res.status(500).json({ message: 'Internal server error.' });
+        }
+    }
 }
+
 
 module.exports = new StudentController();
