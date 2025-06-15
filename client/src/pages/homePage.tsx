@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
 import studentService from '../service/studentService';
-import type { StudentListResponse } from '../interface/interface';
+import type { StudentDetails, StudentListResponse, UpdateStudentRequest } from '../interface/interface';
 import Navbar from '../components/navbar';
 import { ContainerTextFlip } from '../components/containerFlip';
 import { MdDeleteForever, MdOutlineEdit } from 'react-icons/md';
+import ConfirmDeleteModal from '../components/modal/confirm-delete-modal';
+import UpdateStudentModal from '../components/modal/update-model';
+import AddStudentModal from '../components/modal/add-student-modal';
 
 const StudentList = () => {
   const [students, setStudents] = useState<StudentListResponse>({
@@ -39,6 +42,18 @@ const StudentList = () => {
   }>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
 
+  const [updateModalOpen, setUpdateModalOpen] = useState(false);
+  const [updateLoading, setUpdateLoading] = useState(false);
+  const [updateError, setUpdateError] = useState<string | null>(null);
+  const [updateStudent, setUpdateStudent] = useState<StudentDetails | null>(null);
+
+  // Delete Modal
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleteStudent, setDeleteStudent] = useState<StudentDetails | null>(null);
+
+
   const fetchStudents = async (pageNum: number) => {
     setLoading(true);
     setError(null);
@@ -64,6 +79,54 @@ const StudentList = () => {
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
   };
+
+  // update student data
+    const openUpdateModal = (student: StudentDetails) => {
+    setUpdateStudent(student);
+    setUpdateModalOpen(true);
+    setUpdateError(null);
+  };
+ const handleUpdateStudent = async (data: UpdateStudentRequest) => {
+    if (!updateStudent) return;
+    setUpdateLoading(true);
+    setUpdateError(null);
+    // remove fields that are same 
+    if(data.cfHandle == updateStudent.cfHandle) delete data.cfHandle
+    try {
+      await studentService.updateStudent(data, updateStudent.cfHandle);
+      setUpdateModalOpen(false);
+      setUpdateStudent(null);
+      fetchStudents(page);
+    } catch (err: unknown) {
+      console.error('Error updating student:', err);
+      setUpdateError('Failed to update student.');
+    } finally {
+      setUpdateLoading(false);
+    }
+  };
+  // delete modal 
+  const openDeleteModal = (student: StudentDetails) => {
+    setDeleteStudent(student);
+    setDeleteModalOpen(true);
+    setDeleteError(null);
+  };
+  const handleDeleteStudent = async () => {
+    if (!deleteStudent) return;
+    setDeleteLoading(true);
+    setDeleteError(null);
+    try {
+      await studentService.deleteStudent(deleteStudent.cfHandle);
+      setDeleteModalOpen(false);
+      setDeleteStudent(null);
+      fetchStudents(page);
+    } catch (err: unknown) {
+      console.error('Error deleting student:', err);
+      setDeleteError('Failed to delete student.');
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
 
   const validateForm = () => {
     const errors: { name?: string; email?: string; phone?: string; cfHandle?: string } = {};
@@ -194,6 +257,46 @@ const StudentList = () => {
   return (
     <div className="bg-gray-100 dark:bg-gray-900 min-h-screen">
       <Navbar />
+      {(isModalOpen || updateModalOpen || deleteModalOpen) && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/15">
+       <AddStudentModal
+  open={isModalOpen}
+  formData={formData}
+  formErrors={formErrors}
+  submitError={submitError}
+  formLoading={formLoading}
+  onInputChange={handleInputChange}
+  onClose={handleModalClose}
+  onSubmit={handleAddStudent}
+/>
+
+         <UpdateStudentModal
+          open={updateModalOpen}
+          initialData={
+            updateStudent
+              ? {
+                  name: updateStudent.name,
+                  email: updateStudent.email,
+                  phone: updateStudent.phone,
+                  cfHandle: updateStudent.cfHandle,
+                }
+              : { name: '', email: '', phone: '', cfHandle: '' }
+          }
+          onClose={() => setUpdateModalOpen(false)}
+          onSubmit={handleUpdateStudent}
+          loading={updateLoading}
+          error={updateError}
+        />
+        <ConfirmDeleteModal
+          open={deleteModalOpen}
+          studentName={deleteStudent?.name}
+          onClose={() => setDeleteModalOpen(false)}
+          onConfirm={handleDeleteStudent}
+          loading={deleteLoading}
+          error={deleteError}
+        />
+      </div>
+      )}
       <div className="mx-auto p-4 sm:p-6 lg:p-8">
         <div className="flex justify-between items-center mb-8">
           <ContainerTextFlip />
@@ -249,7 +352,7 @@ const StudentList = () => {
              
               </table>
               <div className="flex items-center justify-center py-12">
-                <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-t-2 border-blue-500"></div>
                 <p className='ml-4 text-gray-500 dark:text-gray-400'>
                   Loading Students </p>
                 
@@ -387,9 +490,11 @@ const StudentList = () => {
                           View Profile
                         </button>
                         <MdDeleteForever
+                          onClick={() => openDeleteModal(student)}
                           className="text-red-600 hover:text-red-800 cursor-pointer ml-4 text-lg"
                         />
                         <MdOutlineEdit
+                          onClick={() => openUpdateModal(student)}
                           className="text-blue-700 hover:text-blue-900 cursor-pointer ml-4 text-lg"
                         />
                       </div>
@@ -401,119 +506,11 @@ const StudentList = () => {
           )}
         </div>
 
-        {students.pagination.totalPages > 0 && renderPagination()}
+        {students.pagination.totalPages > 1 && renderPagination()}
 
-        {isModalOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-20 flex justify-center items-center z-10">
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-                Add New Student
-              </h2>
-              {submitError && (
-                <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg flex items-center">
-                  <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                    <path
-                      fillRule="evenodd"
-                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm-1-3a1 1 0 112 0 1 1 0 01-2 0zm0-9a1 1 0 011 1v4a1 1 0 11-2 0V7a1 1 0 011-1z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  {submitError}
-                </div>
-              )}
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Name
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    className="mt-1 w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                    placeholder="Enter name"
-                  />
-                  {formErrors.name && (
-                    <p className="mt-1 text-sm text-red-600">{formErrors.name}</p>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    className="mt-1 w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                    placeholder="Enter email"
-                  />
-                  {formErrors.email && (
-                    <p className="mt-1 text-sm text-red-600">{formErrors.email}</p>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Phone
-                  </label>
-                  <input
-                    type="text"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleInputChange}
-                    className="mt-1 w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                    placeholder="Enter phone number"
-                  />
-                  {formErrors.phone && (
-                    <p className="mt-1 text-sm text-red-600">{formErrors.phone}</p>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Codeforces Handle
-                  </label>
-                  <input
-                    type="text"
-                    name="cfHandle"
-                    value={formData.cfHandle}
-                    onChange={handleInputChange}
-                    className="mt-1 w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                    placeholder="Enter Codeforces handle"
-                  />
-                  {formErrors.cfHandle && (
-                    <p className="mt-1 text-sm text-red-600">{formErrors.cfHandle}</p>
-                  )}
-                </div>
-              </div>
-              <div className="mt-6 flex justify-end space-x-3">
-                <button
-                  onClick={handleModalClose}
-                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleAddStudent}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  {
-                    formLoading ? (
-                      <div>
-                            <span className="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span>
-                      <span className="ml-2">Adding...</span>
-                      </div>
-                  
-                    ):(
-                      'Add Student'
-                    )
-                  }
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        
+       
+
       </div>
     </div>
   );

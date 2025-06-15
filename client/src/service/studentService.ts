@@ -1,6 +1,7 @@
 import axios from "axios";
 import type { StudentQueryParams } from "../interface/query";
-import type { StudentListResponse,CreateStudentRequest } from "../interface/interface";
+import type { StudentListResponse,CreateStudentRequest, UpdateStudentRequest } from "../interface/interface";
+
 
 class StudentService {
     async getAllStudent(
@@ -44,6 +45,33 @@ class StudentService {
         }
 
     }
+    async deleteStudent(
+        handle:string): Promise<void> {
+        console.log("Deleting student with handle:", handle);
+        try{
+            const response = await axios.delete(`/api/student/${handle}`);
+            console.log("Student deleted successfully:", response.data);
+            return response.data;
+        }catch(error:unknown) {
+            console.error("Error deleting student:", error);
+            throw new Error("Failed to delete student");
+        }
+        }
+    async updateStudent(
+        studentData:UpdateStudentRequest,handle:string
+    ){
+        console.log("Updating student with data:", studentData);
+        try {
+            const response = await axios.put(`/api/student/${handle}`, studentData);
+            console.log("Student updated successfully:", response.data);
+            return response.data;
+        }
+        catch(err:unknown) {
+            console.error("Error updating student:", err);
+            throw new Error("Failed to update student");
+        }
+    }
+
 
 
 }

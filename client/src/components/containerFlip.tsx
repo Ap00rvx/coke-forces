@@ -132,6 +132,9 @@ export function ContainerTextFlip({
             </motion.span>
           ))}
         </motion.div>
+        <div className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+          Where we solve problems, code solutions, and grow together!
+        </div>
       </motion.div>
     </motion.p>
   );
