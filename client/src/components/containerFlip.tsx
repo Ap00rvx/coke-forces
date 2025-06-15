@@ -51,6 +51,7 @@ export function ContainerTextFlip({
   ];
  
   const [currentColors, setCurrentColors] = React.useState(colors);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [count, setCount] = React.useState(0);
  
   React.useEffect(() => {

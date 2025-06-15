@@ -484,7 +484,11 @@ const StudentList = () => {
                     <td className="px-2 whitespace-nowrap hidden lg:table-cell">
                       <div className="flex justify-start items-center">
                         <button
-                          onClick={() => {}}
+                          onClick={() => {
+                            // navigate to /profile/:handle route
+                            window.location.href = "/profile/"+student.cfHandle 
+
+                          }}
                           className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer text-xs font-medium"
                         >
                           View Profile
