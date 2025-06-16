@@ -14,7 +14,35 @@ const ProfilePage = () => {
   const [profile, setProfile] = useState<StudentHandleResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+   const [reminderLoading, setReminderLoading] = useState(false);
+  const [reminderError, setReminderError] = useState<string | null>(null);
 
+
+  const handleReminderToggle = async () => {
+    if (!profile) return;
+    setReminderLoading(true);
+    setReminderError(null);
+    try {
+      const message = await profileService.updateReminder(
+        profile.student.cfHandle,
+        !profile.student.emailRemindersDisabled
+      );
+      console.log("Reminder update response:", message);
+      // Update local state to reflect the change
+      setProfile({
+        ...profile,
+        student: {
+          ...profile.student,
+          emailRemindersDisabled: !profile.student.emailRemindersDisabled,
+        },
+      });
+    } catch (err: unknown) {
+    console.error(err);      
+    setReminderError("Failed to update reminder setting.");
+    } finally {
+      setReminderLoading(false);
+    }
+  };
   useEffect(() => {
     if (!handle) {
       setError("No handle provided.");
@@ -130,16 +158,43 @@ const ProfilePage = () => {
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6">
-              <div>
-                <div className="text-gray-700 dark:text-gray-300 text-xs sm:text-sm mb-1">Reminder Enabled</div>
-                <div className="font-medium text-gray-900 dark:text-white text-sm sm:text-base">{student.emailRemindersDisabled ? 
-                  "Disabled" : "Enabled"}</div>
+                <div>
+                  <div className="text-gray-700 dark:text-gray-300 text-xs sm:text-sm mb-1 flex items-center gap-2">
+                    Reminder
+                    
+                  </div>
+                  <div className="font-medium text-gray-900 dark:text-white text-sm sm:text-base justify-start items-center flex">
+                   <span>  {student.emailRemindersDisabled ? "Disabled" : "Enabled"} </span>
+                   <button
+                      onClick={handleReminderToggle}
+                      disabled={reminderLoading}
+                      className={`ml-2 px-2 py-1 rounded text-xs font-medium transition-colors ${
+                        student.emailRemindersDisabled
+                          ? "bg-green-300 text-gray-700 hover:bg-green-400 dark:bg-green-700 dark:text-gray-200 dark:hover:bg-green-600"
+                          : "bg-red-500 text-white hover:bg-red-600"
+                      }`}
+                      title={
+                        student.emailRemindersDisabled
+                          ? "Enable reminder emails"
+                          : "Disable reminder emails"
+                      }
+                    >
+                      {reminderLoading
+                        ? "Updating..."
+                        : student.emailRemindersDisabled
+                        ? "Enable"
+                        : "Disable"}
+                    </button>
+                  </div>
+                  {reminderError && (
+                    <div className="text-xs text-red-500 mt-1">{reminderError}</div>
+                  )}
+                </div>
+                <div>
+                  <div className="text-gray-700 dark:text-gray-300 text-xs sm:text-sm mb-1">Reminder sent till now</div>
+                  <div className="font-medium text-gray-900 dark:text-white text-sm sm:text-base">{student.reminderCount}</div>
+                </div>
               </div>
-              <div>
-                <div className="text-gray-700 dark:text-gray-300 text-xs sm:text-sm mb-1">Reminder sent till now</div>
-                <div className="font-medium text-gray-900 dark:text-white text-sm sm:text-base">{student.reminderCount}</div>
-              </div>
-            </div>
             <div className="mb-2">
               <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-2">Profile Metrics</h3>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">

@@ -13,6 +13,19 @@ class ProfileService{
             throw new Error("Failed to fetch profile details");
         }
     }
+    async updateReminder(handle: string, reminder: boolean): Promise<string> {
+        console.log("Updating reminder for handle:", handle, "to:", reminder);
+        try {
+            const response = await axios.put(`/api/student/${handle}/update-reminder`, {
+                value : reminder
+            });
+            console.log("Reminder updated successfully:", response.data);
+            return response.data["message"];
+        }catch(err:unknown){
+            console.error("Error updating reminder:", err);
+            throw new Error("Failed to update reminder");
+        }
+    }
 }
 
 export default new ProfileService()

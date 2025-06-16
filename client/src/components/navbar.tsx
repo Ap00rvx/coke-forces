@@ -79,7 +79,7 @@ const Navbar = () => {
               href="https://github.com/Ap00rvx/coke-forces.git"
               target="_blank"
               rel="noopener noreferrer"
-              className="p-1 rounded-full bg-white dark:bg-gray-800 text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              className="p-1 rounded-full bg-white dark:bg-white-800 text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
             >
               <img
                 src="/git.png"
