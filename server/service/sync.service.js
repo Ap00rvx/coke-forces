@@ -12,7 +12,7 @@ async function syncCodeforcesData() {
     const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC+5:30
     const istHour = new Date(now.getTime() ).getHours();
    
-    const isPeakHour = istHour >= 8 && istHour < 15; // 8 AM to 10 PM IST
+    const isPeakHour = istHour >= 8 && istHour < 12; // 8 AM to 10 PM IST
 
     if (isPeakHour) {
     console.log('Sync disabled during peak hours (8 AM to 10 PM IST).');
@@ -41,9 +41,9 @@ async function syncCodeforcesData() {
                 maxRating: userInfo.maxRating || 0,
                 rank: userInfo.rank || 'Unranked',
                 titlePhoto: userInfo.titlePhoto || '',
-                lastOnline: userInfo.lastOnlineTime ? new Date(userInfo.lastOnlineTime * 1000) : null,
+                lastOnline: userInfo.lastOnlineTime ? new Date(userInfo.lastOnlineTime ) : null,
                 organization: userInfo.organization || '',
-                registeredAt: userInfo.registrationTime ? new Date(userInfo.registrationTime * 1000) : null,
+                registeredAt: userInfo.registrationTime ? new Date(userInfo.registrationTime ) : null,
                 friendOfCount: userInfo.friendOfCount || 0,
                 contests: [],
                 submissions: [],

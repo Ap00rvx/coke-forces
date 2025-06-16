@@ -31,7 +31,7 @@ class StudentController {
             newStudent.maxRating = userInfo.maxRating;
             newStudent.rank = userInfo.rank;
             newStudent.titlePhoto = userInfo.titlePhoto || "";
-            newStudent.lastOnline = userInfo.lastOnlineTime ? new Date(userInfo.lastOnlineTime * 1000) : null; 
+            newStudent.lastOnline = userInfo.lastOnlineTime ? new Date(userInfo.lastOnlineTime) : null; 
             newStudent.organization = userInfo.organization || ""; 
             newStudent.registeredAt = new Date(userInfo.registrationTime ); 
             newStudent.friendOfCount = userInfo.friendOfCount || 0;

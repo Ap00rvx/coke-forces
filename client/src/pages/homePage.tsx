@@ -53,7 +53,6 @@ const StudentList = () => {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deleteStudent, setDeleteStudent] = useState<StudentDetails | null>(null);
 
-
   const fetchStudents = async (pageNum: number) => {
     setLoading(true);
     setError(null);
@@ -80,18 +79,18 @@ const StudentList = () => {
     setPage(newPage);
   };
 
-  // update student data
-    const openUpdateModal = (student: StudentDetails) => {
+  // Update student data
+  const openUpdateModal = (student: StudentDetails) => {
     setUpdateStudent(student);
     setUpdateModalOpen(true);
     setUpdateError(null);
   };
- const handleUpdateStudent = async (data: UpdateStudentRequest) => {
+
+  const handleUpdateStudent = async (data: UpdateStudentRequest) => {
     if (!updateStudent) return;
     setUpdateLoading(true);
     setUpdateError(null);
-    // remove fields that are same 
-    if(data.cfHandle == updateStudent.cfHandle) delete data.cfHandle
+    if (data.cfHandle === updateStudent.cfHandle) delete data.cfHandle;
     try {
       await studentService.updateStudent(data, updateStudent.cfHandle);
       setUpdateModalOpen(false);
@@ -104,12 +103,14 @@ const StudentList = () => {
       setUpdateLoading(false);
     }
   };
-  // delete modal 
+
+  // Delete modal
   const openDeleteModal = (student: StudentDetails) => {
     setDeleteStudent(student);
     setDeleteModalOpen(true);
     setDeleteError(null);
   };
+
   const handleDeleteStudent = async () => {
     if (!deleteStudent) return;
     setDeleteLoading(true);
@@ -126,7 +127,6 @@ const StudentList = () => {
       setDeleteLoading(false);
     }
   };
-
 
   const validateForm = () => {
     const errors: { name?: string; email?: string; phone?: string; cfHandle?: string } = {};
@@ -160,7 +160,7 @@ const StudentList = () => {
     setFormLoading(true);
     if (!validateForm()) {
       setFormLoading(false);
-      return; 
+      return;
     }
 
     try {
@@ -170,7 +170,7 @@ const StudentList = () => {
       setFormErrors({});
       setSubmitError(null);
       setFormLoading(false);
-      fetchStudents(page); // Refresh the student list
+      fetchStudents(page);
     } catch (err: unknown) {
       console.error('Error adding student:', err);
       setFormLoading(false);
@@ -201,7 +201,7 @@ const StudentList = () => {
         <button
           key={i}
           onClick={() => handlePageChange(i)}
-          className={`mx-1 px-4 py-2 rounded-lg transition-colors text-sm font-medium ${
+          className={`mx-1 px-3 py-1 sm:px-4 sm:py-2 rounded-lg transition-colors text-xs sm:text-sm font-medium ${
             currentPage === i
               ? 'bg-blue-600 text-white'
               : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'
@@ -214,18 +214,18 @@ const StudentList = () => {
 
     return (
       <div className="flex flex-col items-center mt-6 gap-4">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <button
             onClick={() => handlePageChange(1)}
             disabled={currentPage === 1}
-            className="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+            className="px-3 py-1 sm:px-4 sm:py-2 rounded-lg bg-gray-200 text-gray-700 text-xs sm:text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
           >
             First
           </button>
           <button
             onClick={() => handlePageChange(currentPage - 1)}
             disabled={currentPage === 1}
-            className="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+            className="px-3 py-1 sm:px-4 sm:py-2 rounded-lg bg-gray-200 text-gray-700 text-xs sm:text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
           >
             Previous
           </button>
@@ -233,19 +233,19 @@ const StudentList = () => {
           <button
             onClick={() => handlePageChange(currentPage + 1)}
             disabled={currentPage === totalPages}
-            className="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+            className="px-3 py-1 sm:px-4 sm:py-2 rounded-lg bg-gray-200 text-gray-700 text-xs sm:text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
           >
             Next
           </button>
           <button
             onClick={() => handlePageChange(totalPages)}
             disabled={currentPage === totalPages}
-            className="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+            className="px-3 py-1 sm:px-4 sm:py-2 rounded-lg bg-gray-200 text-gray-700 text-xs sm:text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
           >
             Last
           </button>
         </div>
-        <span className="text-sm text-gray-600 dark:text-gray-300">
+        <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-300">
           Showing {(currentPage - 1) * students.pagination.limit + 1} to{' '}
           {Math.min(currentPage * students.pagination.limit, totalStudents)} of {totalStudents}{' '}
           students
@@ -258,51 +258,50 @@ const StudentList = () => {
     <div className="bg-gray-100 dark:bg-gray-900 min-h-screen">
       <Navbar />
       {(isModalOpen || updateModalOpen || deleteModalOpen) && (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/15">
-       <AddStudentModal
-  open={isModalOpen}
-  formData={formData}
-  formErrors={formErrors}
-  submitError={submitError}
-  formLoading={formLoading}
-  onInputChange={handleInputChange}
-  onClose={handleModalClose}
-  onSubmit={handleAddStudent}
-/>
-
-         <UpdateStudentModal
-          open={updateModalOpen}
-          initialData={
-            updateStudent
-              ? {
-                  name: updateStudent.name,
-                  email: updateStudent.email,
-                  phone: updateStudent.phone,
-                  cfHandle: updateStudent.cfHandle,
-                }
-              : { name: '', email: '', phone: '', cfHandle: '' }
-          }
-          onClose={() => setUpdateModalOpen(false)}
-          onSubmit={handleUpdateStudent}
-          loading={updateLoading}
-          error={updateError}
-        />
-        <ConfirmDeleteModal
-          open={deleteModalOpen}
-          studentName={deleteStudent?.name}
-          onClose={() => setDeleteModalOpen(false)}
-          onConfirm={handleDeleteStudent}
-          loading={deleteLoading}
-          error={deleteError}
-        />
-      </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/15">
+          <AddStudentModal
+            open={isModalOpen}
+            formData={formData}
+            formErrors={formErrors}
+            submitError={submitError}
+            formLoading={formLoading}
+            onInputChange={handleInputChange}
+            onClose={handleModalClose}
+            onSubmit={handleAddStudent}
+          />
+          <UpdateStudentModal
+            open={updateModalOpen}
+            initialData={
+              updateStudent
+                ? {
+                    name: updateStudent.name,
+                    email: updateStudent.email,
+                    phone: updateStudent.phone,
+                    cfHandle: updateStudent.cfHandle,
+                  }
+                : { name: '', email: '', phone: '', cfHandle: '' }
+            }
+            onClose={() => setUpdateModalOpen(false)}
+            onSubmit={handleUpdateStudent}
+            loading={updateLoading}
+            error={updateError}
+          />
+          <ConfirmDeleteModal
+            open={deleteModalOpen}
+            studentName={deleteStudent?.name}
+            onClose={() => setDeleteModalOpen(false)}
+            onConfirm={handleDeleteStudent}
+            loading={deleteLoading}
+            error={deleteError}
+          />
+        </div>
       )}
       <div className="mx-auto p-4 sm:p-6 lg:p-8">
         <div className="flex justify-between items-center mb-8">
           <ContainerTextFlip />
           <button
             onClick={() => setIsModalOpen(true)}
-            className="px-6 hidden md:block  py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors cursor-pointer text-sm font-medium"
+            className="px-4 sm:px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors cursor-pointer text-xs sm:text-sm font-medium"
           >
             + Add Student
           </button>
@@ -325,41 +324,38 @@ const StudentList = () => {
           {loading ? (
             <div>
               <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-700">
-                <tr>
-                  <th className="py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-20"></th>
-                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Name
-                  </th>
-                  <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider hidden md:table-cell">
-                    Phone
-                  </th>
-                  <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    CF Handle
-                  </th>
-                  <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Rating / Max
-                  </th>
-                  <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider hidden lg:table-cell">
-                    Rank
-                  </th>
-                  <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider hidden lg:table-cell">
-                    Synced at
-                  </th>
-                  <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider hidden lg:table-cell justify-end items-end"></th>
-                </tr>
-              </thead>
-             
+                <thead className="bg-gray-50 dark:bg-gray-700">
+                  <tr>
+                    <th className="py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-12 sm:w-20"></th>
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Name
+                    </th>
+                    <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider hidden md:table-cell">
+                      Phone
+                    </th>
+                    <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider hidden sm:table-cell">
+                      CF Handle
+                    </th>
+                    <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider hidden md:table-cell">
+                      Rating / Max
+                    </th>
+                    <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider hidden lg:table-cell">
+                      Rank
+                    </th>
+                    <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider hidden lg:table-cell">
+                      Synced at
+                    </th>
+                    <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider sm:table-cell">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
               </table>
               <div className="flex items-center justify-center py-12">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-t-2 border-blue-500"></div>
-                <p className='ml-4 text-gray-500 dark:text-gray-400'>
-                  Loading Students </p>
-                
+                <p className="ml-4 text-gray-500 dark:text-gray-400">Loading Students</p>
               </div>
             </div>
-            
-            
           ) : students.students.length === 0 ? (
             <div className="text-center py-12 text-gray-500 dark:text-gray-400">
               No students found.
@@ -368,17 +364,17 @@ const StudentList = () => {
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
               <thead className="bg-gray-50 dark:bg-gray-700">
                 <tr>
-                  <th className="py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-20"></th>
+                  <th className="py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-12 sm:w-20"></th>
                   <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Name
                   </th>
                   <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider hidden md:table-cell">
                     Phone
                   </th>
-                  <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider hidden sm:table-cell">
                     CF Handle
                   </th>
-                  <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider hidden md:table-cell">
                     Rating / Max
                   </th>
                   <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider hidden lg:table-cell">
@@ -387,7 +383,9 @@ const StudentList = () => {
                   <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider hidden lg:table-cell">
                     Synced at
                   </th>
-                  <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider hidden lg:table-cell justify-end items-end"></th>
+                  <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider sm:table-cell">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -396,11 +394,11 @@ const StudentList = () => {
                     key={student.id}
                     className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                   >
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-2 sm:px-6 py-4 whitespace-nowrap">
                       <img
                         src={student.titlePhoto}
                         alt={student.name}
-                        className="h-10 w-10 rounded-full object-cover"
+                        className="h-8 w-8 sm:h-10 sm:w-10 rounded-full object-cover"
                         onError={(e) => {
                           e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
                             student.name
@@ -421,7 +419,7 @@ const StudentList = () => {
                         {student.phone}
                       </div>
                     </td>
-                    <td className="px-2 py-4 whitespace-nowrap">
+                    <td className="px-2 py-4 whitespace-nowrap hidden sm:table-cell">
                       <a
                         href={`https://codeforces.com/profile/${student.cfHandle}`}
                         target="_blank"
@@ -431,7 +429,7 @@ const StudentList = () => {
                         {student.cfHandle}
                       </a>
                     </td>
-                    <td className="px-2 py-4 whitespace-nowrap">
+                    <td className="px-2 py-4 whitespace-nowrap hidden md:table-cell">
                       <div className="text-sm text-gray-900 dark:text-white font-bold">
                         {student.rating} /
                         <span className="text-red-400 dark:text-blue-500 font-normal ml-1">
@@ -481,25 +479,23 @@ const StudentList = () => {
                         })}
                       </div>
                     </td>
-                    <td className="px-2 whitespace-nowrap hidden lg:table-cell">
-                      <div className="flex justify-start items-center">
+                    <td className="px-2 py-4 whitespace-nowrap sm:table-cell">
+                      <div className="flex justify-start items-center gap-2 sm:gap-4">
                         <button
                           onClick={() => {
-                            // navigate to /profile/:handle route
-                            window.location.href = "/profile/"+student.cfHandle 
-
+                            window.location.href = "/profile/" + student.cfHandle;
                           }}
-                          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer text-xs font-medium"
+                          className="px-2 sm:px-4 py-1 sm:py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer text-xs font-medium"
                         >
-                          View Profile
+                          View
                         </button>
                         <MdDeleteForever
                           onClick={() => openDeleteModal(student)}
-                          className="text-red-600 hover:text-red-800 cursor-pointer ml-4 text-lg"
+                          className="text-red-600 hover:text-red-800 cursor-pointer text-lg sm:text-xl"
                         />
                         <MdOutlineEdit
                           onClick={() => openUpdateModal(student)}
-                          className="text-blue-700 hover:text-blue-900 cursor-pointer ml-4 text-lg"
+                          className="text-blue-700 hover:text-blue-900 cursor-pointer text-lg sm:text-xl"
                         />
                       </div>
                     </td>
@@ -511,10 +507,6 @@ const StudentList = () => {
         </div>
 
         {students.pagination.totalPages > 1 && renderPagination()}
-
-        
-       
-
       </div>
     </div>
   );
