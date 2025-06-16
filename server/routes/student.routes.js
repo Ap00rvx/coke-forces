@@ -11,6 +11,7 @@ router.delete('/student/:handle', studentController.deleteStudent);
 
 router.post('/student/send-reminder/:cfHandle', studentController.sendReminderEmail);
 router.post('/student/sync', studentController.syncStudentsData);
+router.put("/student/:handle/update-reminder",studentController.setEmailReminder);
 
 
 

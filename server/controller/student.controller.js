@@ -527,8 +527,33 @@ class StudentController {
         console.error('Error syncing students data:', error);
         return res.status(500).json({ message: 'Internal server error.' });
     }
-}
 
+
+}
+    async setEmailReminder(req, res) {
+    const { handle } = req.params;
+    const { value } = req.body; 
+
+    try {
+        // Find the student by Codeforces handle
+        const student = await Student.findOne({ cfHandle: handle });
+        if (!student) {
+            return res.status(404).json({ message: 'Student not found with provided handle.' });
+        }
+
+        // Update the emailRemindersDisabled field
+        student.emailRemindersDisabled = !!value;
+        await student.save();
+
+        return res.status(200).json({
+            message: `Email reminders have been ${value ? 'disabled' : 'enabled'} for this student.`,
+            emailRemindersDisabled: student.emailRemindersDisabled,
+        });
+    } catch (error) {
+        console.error('Error updating email reminder setting:', error);
+        return res.status(500).json({ message: 'Internal server error.' });
+    }
+}
 
 
 }

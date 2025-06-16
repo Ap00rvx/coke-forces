@@ -7,6 +7,8 @@ import { MdDeleteForever, MdOutlineEdit } from 'react-icons/md';
 import ConfirmDeleteModal from '../components/modal/confirm-delete-modal';
 import UpdateStudentModal from '../components/modal/update-model';
 import AddStudentModal from '../components/modal/add-student-modal';
+import UpdateConfigModal from '../components/modal/update-config-modal';
+import configService from '../service/configService';
 
 const StudentList = () => {
   const [students, setStudents] = useState<StudentListResponse>({
@@ -184,6 +186,35 @@ const StudentList = () => {
     setFormErrors({});
     setSubmitError(null);
   };
+  const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
+const [configLoading, setConfigLoading] = useState(false);
+const [configError, setConfigError] = useState<string | null>(null);
+const [cronValue, setCronValue] = useState("0 2 * * *"); // Default or fetch from backend
+
+// Handle open/close
+const handleConfigModalOpen = () => setIsConfigModalOpen(true);
+const handleConfigModalClose = () => {
+  setIsConfigModalOpen(false);
+  setConfigError(null);
+};
+
+// Handle submit
+const handleConfigModalSubmit = async (cron: string) => {
+  setConfigLoading(true);
+  setConfigError(null);
+  try {
+    // Replace with your API call to update cron config
+    console.log(cron)
+    await configService.updateCron (cron);
+    setCronValue(cron);
+    setIsConfigModalOpen(false);
+  } catch (err: unknown) {
+    console.error("Failed to update config",err) 
+    setConfigError("Failed to update config. Please try again.");
+  } finally {
+    setConfigLoading(false);
+  }
+};
 
   const renderPagination = () => {
     const { currentPage, totalPages, totalStudents } = students.pagination;
@@ -257,8 +288,16 @@ const StudentList = () => {
   return (
     <div className="bg-gray-100 dark:bg-gray-900 min-h-screen">
       <Navbar />
-      {(isModalOpen || updateModalOpen || deleteModalOpen) && (
+      {(isModalOpen || updateModalOpen || deleteModalOpen || isConfigModalOpen) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/15">
+          <UpdateConfigModal
+  open={isConfigModalOpen}
+  initialCron={cronValue}
+  onClose={handleConfigModalClose}
+  onSubmit={handleConfigModalSubmit}
+  loading={configLoading}
+  error={configError}
+/>
           <AddStudentModal
             open={isModalOpen}
             formData={formData}
@@ -297,14 +336,22 @@ const StudentList = () => {
         </div>
       )}
       <div className="mx-auto p-4 sm:p-6 lg:p-8">
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex md:flex-row flex-col justify-between items-center mb-8">
           <ContainerTextFlip />
+          <div className='flex gap-2'>
+            <button
+            onClick={handleConfigModalOpen}
+            className="px-4 sm:px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer text-xs sm:text-sm font-medium"
+          >
+            Edit Config
+          </button>
           <button
             onClick={() => setIsModalOpen(true)}
             className="px-4 sm:px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors cursor-pointer text-xs sm:text-sm font-medium"
           >
             + Add Student
           </button>
+          </div>
         </div>
 
         {error && (
