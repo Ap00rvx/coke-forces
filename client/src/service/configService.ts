@@ -10,7 +10,7 @@ class ConfigService {
     async updateCron(value: string): Promise<string> {
         console.log("Cron value:", value);
         try {
-            const resposne = await axios.put(`/api/config/cron`,{
+            const resposne = await axios.put(`https://coke-forces-server.onrender.com/api/config/cron`,{
                 value
             });
             console.log("Config updated  successfully:", resposne.data);
