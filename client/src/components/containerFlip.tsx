@@ -109,7 +109,7 @@ export function ContainerTextFlip({
             <motion.span
               key={index}
               style={{ color: currentColors[index % currentColors.length] }}
-              className="whitespace-pre font-sans tracking-tight"
+              className="whitespace-pre font-sans tracking-tight font-trade-winds"
               initial={{
                 opacity: 0,
                 // filter: "blur(10px)",

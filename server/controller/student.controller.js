@@ -33,7 +33,7 @@ class StudentController {
             newStudent.titlePhoto = userInfo.titlePhoto || "";
             newStudent.lastOnline = userInfo.lastOnlineTime ? new Date(userInfo.lastOnlineTime * 1000) : null; 
             newStudent.organization = userInfo.organization || ""; 
-            newStudent.registeredAt = new Date(userInfo.registrationTime * 1000); 
+            newStudent.registeredAt = new Date(userInfo.registrationTime ); 
             newStudent.friendOfCount = userInfo.friendOfCount || 0;
             newStudent.lastSyncedAt = new Date();
             newStudent.dataSyncFrequency = 'daily'; 
@@ -197,8 +197,16 @@ class StudentController {
         });
 
         const averageRating = totalSolved > 0 ? (totalRating / totalSolved).toFixed(2) : 0;
-        const daysPeriod = days || (student.createdAt ? (Date.now() - student.createdAt.getTime()) / (24 * 60 * 60 * 1000) : 1);
+        console.log(averageRating);
+        console.log(student.registeredAt)
+
+        const daysPeriod = days || (student.createdAt ? (Date.now() - student.registeredAt.getTime())/( 1000 * 60 * 60 * 24 ) 
+        : 1);
+        console.log(daysPeriod);
+        
+
         const averageProblemsPerDay = totalSolved > 0 ? (totalSolved / daysPeriod).toFixed(2) : 0;
+        console.log(averageProblemsPerDay);
 
         // Filter contests by time period if specified
         const contestCutoffTime = contestDays ? new Date(Date.now() - contestDays * 24 * 60 * 60 * 1000) : null;
@@ -249,6 +257,7 @@ class StudentController {
             reminderCount: student.reminderCount,
             lastReminderSent: student.lastReminderSent ? student.lastReminderSent.toISOString() : null,
             lastSyncedAt: student.lastSyncedAt ? student.lastSyncedAt.toISOString() : null,
+            emailRemindersDisabled : student.emailRemindersDisabled || false,
 
         };
 

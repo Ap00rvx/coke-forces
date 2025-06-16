@@ -62,6 +62,7 @@ export interface StudentHandleResponse {
     lastReminderSent: string | null;
     reminderCount: number;
     lastSyncedAt: string;
+    emailRemindersDisabled: boolean; 
   };
   days: string;
   contestDays: string;
