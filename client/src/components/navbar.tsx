@@ -29,7 +29,7 @@ const Navbar = () => {
   };
 
   const handleExport = () => {
-    window.location.href = '/api/students/csv';
+    window.location.href = 'https://coke-forces-server.onrender.com/api/students/csv';
   };
 
   const toggleMenu = () => {
